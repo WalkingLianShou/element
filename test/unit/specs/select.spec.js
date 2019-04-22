@@ -285,10 +285,10 @@ describe('Select', () => {
     vm.value = '选项1';
     select.inputHovering = true;
     setTimeout(() => {
-      const icon = vm.$el.querySelector('.el-input__icon');
-      expect(icon.classList.contains('el-icon-circle-close')).to.true;
-      icon.click();
-      expect(vm.value).to.equal('');
+      const iconClear = vm.$el.querySelector('.el-input__icon.el-icon-circle-close');
+      expect(iconClear).to.exist;
+      iconClear.click();
+      expect(vm.value).to.equal(null);
       done();
     }, 100);
   });
@@ -799,6 +799,26 @@ describe('Select', () => {
         done();
       }, 10);
     }, 10);
+  });
+
+  it('render slot `empty`', done => {
+    vm = createVue({
+      template: `
+        <div>
+          <el-select v-model="value">
+            <div class="empty-slot" slot="empty">EmptySlot</div>
+          </el-select>
+        </div>
+      `,
+      data() {
+        return {
+          value: 1
+        };
+      }
+    });
+
+    expect(vm.$el.querySelector('.empty-slot').innerText).to.be.equal('EmptySlot');
+    done();
   });
 
   describe('resetInputHeight', () => {

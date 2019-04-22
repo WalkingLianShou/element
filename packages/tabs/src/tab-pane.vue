@@ -49,20 +49,9 @@
       }
     },
 
-    mounted() {
-      this.$parent.addPanes(this);
-    },
-
-    destroyed() {
-      if (this.$el && this.$el.parentNode) {
-        this.$el.parentNode.removeChild(this.$el);
-      }
-      this.$parent.removePanes(this);
-    },
-
     watch: {
       label() {
-        this.$parent.$forceUpdate();
+        this.$parent.$emit('tabLabelChanged');
       }
     }
   };

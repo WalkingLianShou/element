@@ -4,13 +4,18 @@
       'is-error': validateState === 'error',
       'is-validating': validateState === 'validating',
       'is-success': validateState === 'success',
-      'is-required': isRequired || required
+      'is-required': isRequired || required,
+      'is-no-asterisk': elForm && elForm.hideRequiredAsterisk
     },
     sizeClass ? 'el-form-item--' + sizeClass : ''
   ]">
-    <label :for="labelFor" class="el-form-item__label" :style="labelStyle" v-if="label || $slots.label">
-      <slot name="label">{{label + form.labelSuffix}}</slot>
-    </label>
+    <label-wrap
+      :is-auto-width="labelStyle && labelStyle.width === 'auto'"
+      :update-all="form.labelWidth === 'auto'">
+      <label :for="labelFor" class="el-form-item__label" :style="labelStyle" v-if="label || $slots.label">
+        <slot name="label">{{label + form.labelSuffix}}</slot>
+      </label>
+    </label-wrap>
     <div class="el-form-item__content" :style="contentStyle">
       <slot></slot>
       <transition name="el-zoom-in-top">
@@ -38,7 +43,7 @@
   import emitter from 'element-ui/src/mixins/emitter';
   import objectAssign from 'element-ui/src/utils/merge';
   import { noop, getPropByPath } from 'element-ui/src/utils/util';
-
+  import LabelWrap from './label-wrap';
   export default {
     name: 'ElFormItem',
 
@@ -76,6 +81,10 @@
       },
       size: String
     },
+    components: {
+      // use this component to calculate auto width
+      LabelWrap
+    },
     watch: {
       error: {
         immediate: true,
@@ -107,7 +116,13 @@
         if (this.form.labelPosition === 'top' || this.form.inline) return ret;
         if (!label && !this.labelWidth && this.isNested) return ret;
         const labelWidth = this.labelWidth || this.form.labelWidth;
-        if (labelWidth) {
+        if (labelWidth === 'auto') {
+          if (this.labelWidth === 'auto') {
+            ret.marginLeft = this.computedLabelWidth;
+          } else if (this.form.labelWidth === 'auto') {
+            ret.marginLeft = this.elForm.autoLabelWidth;
+          }
+        } else {
           ret.marginLeft = labelWidth;
         }
         return ret;
@@ -166,7 +181,8 @@
         validateMessage: '',
         validateDisabled: false,
         validator: {},
-        isNested: false
+        isNested: false,
+        computedLabelWidth: ''
       };
     },
     methods: {
@@ -198,7 +214,7 @@
           this.validateMessage = errors ? errors[0].message : '';
 
           callback(this.validateMessage, invalidFields);
-          this.elForm && this.elForm.$emit('validate', this.prop, !errors);
+          this.elForm && this.elForm.$emit('validate', this.prop, !errors, this.validateMessage || null);
         });
       },
       clearValidate() {
@@ -260,6 +276,9 @@
         }
 
         this.validate('change');
+      },
+      updateComputedLabelWidth(width) {
+        this.computedLabelWidth = width ? `${width}px` : '';
       }
     },
     mounted() {
